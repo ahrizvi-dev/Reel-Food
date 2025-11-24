@@ -4,11 +4,10 @@ import jwt from "jsonwebtoken";
 
 // iss controller mein hum user registration ka logic likhenge
 export const registerUser = async (req, res) => {
-
   // request body se fullname, email aur password nikal lo
   const { fullname, email, password } = req.body;
 
-  const isUserAlreadyRegistered = await userModel.find({
+  const isUserAlreadyRegistered = await userModel.findOne({
     email: email,
   });
 
@@ -48,11 +47,7 @@ export const registerUser = async (req, res) => {
       id: user._id,
     },
   });
-
-
-
 };
 
-
 // iss controller mein hum user login ka logic likhenge
-export const loginUser = async (req, res) => {}
+export const loginUser = async (req, res) => {};
