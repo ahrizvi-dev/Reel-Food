@@ -12,7 +12,7 @@ export const registerUser = async (req, res) => {
   });
 
   // agar user already registered hai to error bhej do
-  if (isUserAlreadyRegistered.length > 0) {
+  if (isUserAlreadyRegistered) {
     return res.status(400).json({
       success: false,
       message: "User already registered",
@@ -32,7 +32,7 @@ export const registerUser = async (req, res) => {
     {
       userId: user._id,
     },
-    "1e766acad00eb009de5ece3a20624276d66faaf0"
+    process.env.JWT_SECRET
   );
 
   // token ko cookie mein bhej do
@@ -50,4 +50,51 @@ export const registerUser = async (req, res) => {
 };
 
 // iss controller mein hum user login ka logic likhenge
-export const loginUser = async (req, res) => {};
+export const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await userModel.findOne({ email: email });
+
+  // agar user nahi mila to error bhej do
+  if (!user) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid email or password",
+    });
+  }
+
+  isPasswordMatched = await bcrypt.compare(password, user.password);
+
+  // agar password match nahi karta to error bhej do
+  if (!isPasswordMatched) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid email or password",
+    });
+  }
+
+  // agar user mil gaya aur password bhi match kar gaya to token generate kar do
+  const token = jwt.sign(
+    {
+      userId: user._id,
+    },
+    process.env.JWT_SECRET
+  );
+
+  // token ko cookie mein bhej do
+  res.cookie("token", token);
+  res.status(200).json({
+    success: true,
+    message: "User logged in successfully",
+  });
+};
+
+export const logoutUser = (req, res) => {
+  res.clearCookie("token");
+  res.status(200).json({
+    success: true,
+    message: "User logged out successfully",
+  });
+}
+
+
