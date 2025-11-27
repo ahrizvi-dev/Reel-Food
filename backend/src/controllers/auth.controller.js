@@ -1,4 +1,5 @@
 import userModel from "../models/user.model.js";
+import foodPartnerModel from "../models/foodpartner.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -95,6 +96,96 @@ export const logoutUser = (req, res) => {
     success: true,
     message: "User logged out successfully",
   });
+};
+
+export const registerFoodpartner = async (req, res) => {
+  const { name, email, password } = req.body || {};
+
+  if (!name || !email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Name, email, and password are required",
+    });
+  }
+
+  const isPartnerAlreadyRegistered = await foodPartnerModel.findOne({
+    email,
+  });
+
+  if (isPartnerAlreadyRegistered) {
+    res.status(400).json({
+      success: false,
+      message: "Food Partner already registered",
+    });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const foodPartner = await foodPartnerModel.create({
+    name,
+    email,
+    password: hashedPassword,
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Food Partner registered successfully",
+  });
+
+  const token = jwt.sign(
+    {
+      foodPartnerId: foodPartner._id,
+    },
+    process.env.JWT_SECRET
+  );
+
+  res.cookie("token", token);
+
+  res.status(201).json({
+    success: true,
+    message: "Food Partner registered successfully",
+  });
+};
+
+export const loginFoodpartner = async (req, res) => {
+  const { email, password } = req.body;
+
+  const foodPartner = await foodPartnerModel.findOne({ email });
+  if (!foodPartner) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid email or password",
+    });
+  }
+
+  const isPasswordMatched = await bcrypt.compare(
+    password,
+    foodPartner.password
+  );
+  if (!isPasswordMatched) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid email or password",
+    });
+  }
+
+  const token = jwt.sign(
+    {
+      foodPartnerId: foodPartner._id,
+    },
+    process.env.JWT_SECRET
+  );
+
+  res.cookie("token", token);
+  res.status(200).json({
+    success: true,
+    message: "Food Partner logged in successfully",
+  });
+};
+
+export const logoutFoodpartner = (req, res) => {
+  res.clearCookie("token");
+  res.status(200).json({
+    success: true,
+    message: "Food Partner logged out successfully",
+  });
 }
-
-
